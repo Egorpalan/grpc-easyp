@@ -7,6 +7,7 @@
 package v1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -454,31 +455,32 @@ var File_api_notes_v1_messages_proto protoreflect.FileDescriptor
 
 const file_api_notes_v1_messages_proto_rawDesc = "" +
 	"\n" +
-	"\x1bapi/notes/v1/messages.proto\x12\fapi.notes.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc4\x01\n" +
-	"\x04Note\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x129\n" +
+	"\x1bapi/notes/v1/messages.proto\x12\fapi.notes.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x02\n" +
+	"\x04Note\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x1d\n" +
+	"\x05title\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12)\n" +
+	"\vdescription\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x129\n" +
 	"\n" +
 	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"o\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt:g\xbaHd\x1ab\n" +
+	"\x0fNote.updated_at\x12+created_at should be before than updated_at\x1a\"this.created_at <= this.updated_at\"\x81\x01\n" +
 	"\x19CreateOrUpdateNoteRequest\x12\x13\n" +
-	"\x02id\x18\x01 \x01(\tH\x00R\x02id\x88\x01\x01\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescriptionB\x05\n" +
+	"\x02id\x18\x01 \x01(\tH\x00R\x02id\x88\x01\x01\x12\x1d\n" +
+	"\x05title\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12)\n" +
+	"\vdescription\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescriptionB\x05\n" +
 	"\x03_id\"D\n" +
 	"\x1aCreateOrUpdateNoteResponse\x12&\n" +
-	"\x04note\x18\x01 \x01(\v2\x12.api.notes.v1.NoteR\x04note\" \n" +
-	"\x0eGetNoteRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"9\n" +
+	"\x04note\x18\x01 \x01(\v2\x12.api.notes.v1.NoteR\x04note\")\n" +
+	"\x0eGetNoteRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"9\n" +
 	"\x0fGetNoteResponse\x12&\n" +
 	"\x04note\x18\x01 \x01(\v2\x12.api.notes.v1.NoteR\x04note\"\x12\n" +
 	"\x10ListNotesRequest\"=\n" +
 	"\x11ListNotesResponse\x12(\n" +
-	"\x05items\x18\x01 \x03(\v2\x12.api.notes.v1.NoteR\x05items\"#\n" +
-	"\x11DeleteNoteRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
+	"\x05items\x18\x01 \x03(\v2\x12.api.notes.v1.NoteR\x05items\",\n" +
+	"\x11DeleteNoteRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\x14\n" +
 	"\x12DeleteNoteResponseB2Z0github.com/Egorpalan/grpc-easyp/pkg/api/notes/v1b\x06proto3"
 
 var (

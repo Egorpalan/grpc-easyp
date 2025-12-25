@@ -10,6 +10,7 @@ bin-deps:
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0 && \
 	GOBIN=$(LOCAL_BIN) go install github.com/easyp-tech/easyp/cmd/easyp@v0.7.15 && \
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.2.1
 
 .PHONY: gen-proto-protoc
 gen-proto-protoc:
@@ -26,6 +27,10 @@ generate:
 .PHONY: lint
 lint:
 	@$(LOCAL_BIN)/easyp lint --path api
+
+.PHONY: go-lint
+go-lint:
+	@$(LOCAL_BIN)/golangci-lint run --config=.golangci.yml ./...
 
 .PHONY: breaking
 breaking:

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -23,8 +24,14 @@ type PostgresConfig struct {
 }
 
 type ServerConfig struct {
-	GRPCPort string `envconfig:"GRPC_PORT" default:"50051"`
-	GRPCHost string `envconfig:"GRPC_HOST" default:"0.0.0.0"`
+	GRPCPort              string        `envconfig:"GRPC_PORT" default:"50051"`
+	GRPCHost              string        `envconfig:"GRPC_HOST" default:"0.0.0.0"`
+	MaxConcurrentStreams  uint32        `envconfig:"GRPC_MAX_CONCURRENT_STREAMS" default:"50"`
+	KeepAliveTime         time.Duration `envconfig:"GRPC_KEEPALIVE_TIME" default:"30s"`
+	KeepAliveTimeout      time.Duration `envconfig:"GRPC_KEEPALIVE_TIMEOUT" default:"5s"`
+	MaxConnectionIdle     time.Duration `envconfig:"GRPC_MAX_CONNECTION_IDLE" default:"5m"`
+	MaxConnectionAge      time.Duration `envconfig:"GRPC_MAX_CONNECTION_AGE" default:"30m"`
+	MaxConnectionAgeGrace time.Duration `envconfig:"GRPC_MAX_CONNECTION_AGE_GRACE" default:"5s"`
 }
 
 func (c *PostgresConfig) DSN() string {

@@ -47,13 +47,21 @@ func (s *service) createNote(ctx context.Context, title, description string) (*n
 
 	querier := s.repo.NewNotesQuery(ctx)
 	if err := querier.Create(ctx, note); err != nil {
-		s.logger.Error("failed to create note", "error", err, "note_id", newID)
+		s.logger.ErrorContext(ctx,
+			"failed to create note",
+			"error", err,
+			"note_id", newID,
+		)
 		return nil, err
 	}
 
 	createdNote, err := querier.GetByID(ctx, newID)
 	if err != nil {
-		s.logger.Error("failed to get created note", "error", err, "note_id", newID)
+		s.logger.ErrorContext(ctx,
+			"failed to get created note",
+			"error", err,
+			"note_id", newID,
+		)
 		return nil, err
 	}
 
@@ -65,7 +73,11 @@ func (s *service) updateNote(ctx context.Context, id, title, description string)
 
 	note, err := querier.GetByID(ctx, id)
 	if err != nil {
-		s.logger.Error("failed to get note for update", "error", err, "note_id", id)
+		s.logger.ErrorContext(ctx,
+			"failed to get note for update",
+			"error", err,
+			"note_id", id,
+		)
 		return nil, err
 	}
 	if note == nil {
@@ -75,14 +87,22 @@ func (s *service) updateNote(ctx context.Context, id, title, description string)
 	note.Title = title
 	note.Description = description
 
-	if err := querier.Update(ctx, note); err != nil {
-		s.logger.Error("failed to update note", "error", err, "note_id", id)
-		return nil, err
+	if updateErr := querier.Update(ctx, note); updateErr != nil {
+		s.logger.ErrorContext(ctx,
+			"failed to update note",
+			"error", updateErr,
+			"note_id", id,
+		)
+		return nil, updateErr
 	}
 
 	updatedNote, err := querier.GetByID(ctx, id)
 	if err != nil {
-		s.logger.Error("failed to get updated note", "error", err, "note_id", id)
+		s.logger.ErrorContext(ctx,
+			"failed to get updated note",
+			"error", err,
+			"note_id", id,
+		)
 		return nil, err
 	}
 
@@ -96,7 +116,11 @@ func (s *service) GetNote(ctx context.Context, id string) (*notes.Note, error) {
 
 	note, err := s.repo.NewNotesQuery(ctx).GetByID(ctx, id)
 	if err != nil {
-		s.logger.Error("failed to get note", "error", err, "note_id", id)
+		s.logger.ErrorContext(ctx,
+			"failed to get note",
+			"error", err,
+			"note_id", id,
+		)
 		return nil, err
 	}
 	if note == nil {
@@ -109,7 +133,10 @@ func (s *service) GetNote(ctx context.Context, id string) (*notes.Note, error) {
 func (s *service) ListNotes(ctx context.Context) ([]*notes.Note, error) {
 	notesList, err := s.repo.NewNotesQuery(ctx).List(ctx)
 	if err != nil {
-		s.logger.Error("failed to list notes", "error", err)
+		s.logger.ErrorContext(ctx,
+			"failed to list notes",
+			"error", err,
+		)
 		return nil, err
 	}
 
@@ -125,7 +152,11 @@ func (s *service) DeleteNote(ctx context.Context, id string) error {
 
 	note, err := querier.GetByID(ctx, id)
 	if err != nil {
-		s.logger.Error("failed to get note for deletion", "error", err, "note_id", id)
+		s.logger.ErrorContext(ctx,
+			"failed to get note for deletion",
+			"error", err,
+			"note_id", id,
+		)
 		return err
 	}
 	if note == nil {
@@ -133,7 +164,11 @@ func (s *service) DeleteNote(ctx context.Context, id string) error {
 	}
 
 	if err := querier.Delete(ctx, id); err != nil {
-		s.logger.Error("failed to delete note", "error", err, "note_id", id)
+		s.logger.ErrorContext(ctx,
+			"failed to delete note",
+			"error", err,
+			"note_id", id,
+		)
 		return err
 	}
 
