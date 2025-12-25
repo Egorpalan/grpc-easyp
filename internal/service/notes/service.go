@@ -1,0 +1,141 @@
+package notes
+
+import (
+	"context"
+	"log/slog"
+
+	"github.com/Egorpalan/grpc-easyp/internal/model/exception"
+	"github.com/Egorpalan/grpc-easyp/internal/model/notes"
+	"github.com/Egorpalan/grpc-easyp/internal/repository/postgresql"
+	"github.com/google/uuid"
+)
+
+type Service interface {
+	CreateOrUpdateNote(ctx context.Context, id *string, title, description string) (*notes.Note, error)
+	GetNote(ctx context.Context, id string) (*notes.Note, error)
+	ListNotes(ctx context.Context) ([]*notes.Note, error)
+	DeleteNote(ctx context.Context, id string) error
+}
+
+type service struct {
+	logger *slog.Logger
+	repo   postgresql.Repository
+}
+
+func NewService(logger *slog.Logger, repo postgresql.Repository) Service {
+	return &service{
+		logger: logger,
+		repo:   repo,
+	}
+}
+
+func (s *service) CreateOrUpdateNote(ctx context.Context, id *string, title, description string) (*notes.Note, error) {
+	if id == nil || *id == "" {
+		return s.createNote(ctx, title, description)
+	}
+
+	return s.updateNote(ctx, *id, title, description)
+}
+
+func (s *service) createNote(ctx context.Context, title, description string) (*notes.Note, error) {
+	newID := uuid.New().String()
+	note := &notes.Note{
+		ID:          &newID,
+		Title:       title,
+		Description: description,
+	}
+
+	querier := s.repo.NewNotesQuery(ctx)
+	if err := querier.Create(ctx, note); err != nil {
+		s.logger.Error("failed to create note", "error", err, "note_id", newID)
+		return nil, err
+	}
+
+	createdNote, err := querier.GetByID(ctx, newID)
+	if err != nil {
+		s.logger.Error("failed to get created note", "error", err, "note_id", newID)
+		return nil, err
+	}
+
+	return createdNote, nil
+}
+
+func (s *service) updateNote(ctx context.Context, id, title, description string) (*notes.Note, error) {
+	querier := s.repo.NewNotesQuery(ctx)
+
+	note, err := querier.GetByID(ctx, id)
+	if err != nil {
+		s.logger.Error("failed to get note for update", "error", err, "note_id", id)
+		return nil, err
+	}
+	if note == nil {
+		return nil, exception.ErrNoteNotFound
+	}
+
+	note.Title = title
+	note.Description = description
+
+	if err := querier.Update(ctx, note); err != nil {
+		s.logger.Error("failed to update note", "error", err, "note_id", id)
+		return nil, err
+	}
+
+	updatedNote, err := querier.GetByID(ctx, id)
+	if err != nil {
+		s.logger.Error("failed to get updated note", "error", err, "note_id", id)
+		return nil, err
+	}
+
+	return updatedNote, nil
+}
+
+func (s *service) GetNote(ctx context.Context, id string) (*notes.Note, error) {
+	if id == "" {
+		return nil, exception.ErrInvalidInput
+	}
+
+	note, err := s.repo.NewNotesQuery(ctx).GetByID(ctx, id)
+	if err != nil {
+		s.logger.Error("failed to get note", "error", err, "note_id", id)
+		return nil, err
+	}
+	if note == nil {
+		return nil, exception.ErrNoteNotFound
+	}
+
+	return note, nil
+}
+
+func (s *service) ListNotes(ctx context.Context) ([]*notes.Note, error) {
+	notesList, err := s.repo.NewNotesQuery(ctx).List(ctx)
+	if err != nil {
+		s.logger.Error("failed to list notes", "error", err)
+		return nil, err
+	}
+
+	return notesList, nil
+}
+
+func (s *service) DeleteNote(ctx context.Context, id string) error {
+	if id == "" {
+		return exception.ErrInvalidInput
+	}
+
+	querier := s.repo.NewNotesQuery(ctx)
+
+	note, err := querier.GetByID(ctx, id)
+	if err != nil {
+		s.logger.Error("failed to get note for deletion", "error", err, "note_id", id)
+		return err
+	}
+	if note == nil {
+		return exception.ErrNoteNotFound
+	}
+
+	if err := querier.Delete(ctx, id); err != nil {
+		s.logger.Error("failed to delete note", "error", err, "note_id", id)
+		return err
+	}
+
+	return nil
+}

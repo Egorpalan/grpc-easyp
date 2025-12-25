@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package api.notes.v1;
+
+option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/notes/v1";
+
+import "api/notes/v1/messages.proto";
+
+service NoteAPI {
+  rpc CreateOrUpdateNote(CreateOrUpdateNoteRequest) returns (CreateOrUpdateNoteResponse) {}
+  rpc GetNote(GetNoteRequest) returns (GetNoteResponse) {}
+  rpc ListNotes(ListNotesRequest) returns (ListNotesResponse) {}
+  rpc DeleteNote(DeleteNoteRequest) returns (DeleteNoteResponse) {}
+}
+
