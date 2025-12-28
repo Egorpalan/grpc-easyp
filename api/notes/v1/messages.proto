@@ -2,22 +2,29 @@ syntax = "proto3";
 
 package api.notes.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/notes/v1";
 
 message Note {
-  string id = 1;
-  string title = 2;
-  string description = 3;
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  string title = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.min_len = 1];
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
+
+  option (buf.validate.message).cel = {
+    id: "Note.updated_at"
+    message: "created_at should be before than updated_at"
+    expression: "this.created_at <= this.updated_at"
+  };
 }
 
 message CreateOrUpdateNoteRequest {
   optional string id = 1;
-  string title = 2;
-  string description = 3;
+  string title = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.min_len = 1];
 }
 
 message CreateOrUpdateNoteResponse {
@@ -25,7 +32,7 @@ message CreateOrUpdateNoteResponse {
 }
 
 message GetNoteRequest {
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 message GetNoteResponse {
@@ -39,7 +46,7 @@ message ListNotesResponse {
 }
 
 message DeleteNoteRequest {
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 message DeleteNoteResponse {}

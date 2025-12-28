@@ -1,0 +1,105 @@
+version: "2"
+run:
+  concurrency: 8
+  issues-exit-code: 1
+  tests: true
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+linters:
+  default: none
+  enable:
+    - errcheck
+    - goconst
+    - gosec
+    - govet
+    - ineffassign
+    - revive
+    - sloglint
+    - staticcheck
+    - unused
+  settings:
+    govet:
+      enable:
+        - shadow
+        - nilness
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    sloglint:
+      no-mixed-args: true
+      no-global: default
+      context: scope
+      static-msg: true
+      no-raw-keys: false
+      key-naming-case: snake
+      args-on-sep-lines: true
+    revive:
+      rules:
+        - name: var-naming
+          arguments:
+            - [ ]  # allowlist initialisms (список разрешенных названий)
+            - [ ]  # blocklist initialisms (список запрещенных названий)
+            - [ { skipPackageNameChecks: true } ] # отключение проверки имен пакетов
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: G104
+      - path: (.+)\.go$
+        text: exported func .* returns unexported type .*, which can be annoying to use
+      - path: (.+)\.go$
+        text: should have a package comment
+      - path: (.+)\.go$
+        text: don't use an underscore in package name
+      - path: (.+)\.go$
+        text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
+      - path: (.+)\.go$
+        text: should check returned error before deferring
+      - path: (.+)\.go$
+        text: message should be a string literal or a constant
+      - path: (.+)\.go$
+        text: G115
+      - path: (.+)\.go$
+        text: 'dot-imports: should not use dot imports'
+      - path: (.+)\.go$
+        text: G404
+    paths:
+      - \.pb\.go$
+      - \.pb\.gw\.go$
+      - example
+      - bin
+      - vendor
+      - var
+      - tmp
+      - .cache
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - \.pb\.go$
+      - \.pb\.gw\.go$
+      - example
+      - bin
+      - vendor
+      - var
+      - tmp
+      - .cache
+      - third_party$
+      - builtin$
+      - examples$
