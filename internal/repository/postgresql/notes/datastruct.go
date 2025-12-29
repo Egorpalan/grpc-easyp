@@ -6,6 +6,8 @@ import (
 	"github.com/Egorpalan/grpc-easyp/internal/model/notes"
 )
 
+const notesTable = "notes"
+
 type Note struct {
 	ID          string    `db:"id"`
 	Title       string    `db:"title"`

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package api.metrics.v1;
+
+option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/metrics/v1";
+
+message UploadMetricsRequest {
+  double value = 1;
+}
+
+message UploadMetricsResponse {
+  double sum = 1;
+  double average = 2;
+  int64 count = 3;
+}

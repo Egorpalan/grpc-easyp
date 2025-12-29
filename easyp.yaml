@@ -35,11 +35,7 @@ lint:
     - FILE_LOWER_SNAKE_CASE
     - PACKAGE_VERSION_SUFFIX
     - SERVICE_SUFFIX
-
-    # Unary RPC
-    - RPC_NO_CLIENT_STREAMING
-    - RPC_NO_SERVER_STREAMING
-  enum_zero_value_suffix: NONE
+  enum_zero_value_suffix: UNSPECIFIED
   service_suffix: API
 deps:
   - github.com/googleapis/googleapis

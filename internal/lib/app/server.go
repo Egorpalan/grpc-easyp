@@ -17,11 +17,12 @@ import (
 
 // ServerOptions опции для создания gRPC сервера
 type ServerOptions struct {
-	Config            *config.Config
-	Logger            *slog.Logger
-	UnaryInterceptors []grpc.UnaryServerInterceptor
-	EnableReflection  bool
-	EnableValidation  bool
+	Config             *config.Config
+	Logger             *slog.Logger
+	UnaryInterceptors  []grpc.UnaryServerInterceptor
+	StreamInterceptors []grpc.StreamServerInterceptor
+	EnableReflection   bool
+	EnableValidation   bool
 }
 
 // NewServer создает новый gRPC сервер с настроенными опциями
@@ -48,6 +49,9 @@ func NewServer(opts ServerOptions) (*grpc.Server, error) {
 		interceptors = append(interceptors, middleware.ValidationInterceptor(opts.Logger))
 	}
 
+	streamInterceptors := make([]grpc.StreamServerInterceptor, 0)
+	streamInterceptors = append(streamInterceptors, opts.StreamInterceptors...)
+
 	serverOpts := []grpc.ServerOption{
 		grpc.MaxConcurrentStreams(cfg.ServerConfig.MaxConcurrentStreams),
 		grpc.KeepaliveEnforcementPolicy(kaep),
@@ -56,6 +60,10 @@ func NewServer(opts ServerOptions) (*grpc.Server, error) {
 
 	if len(interceptors) > 0 {
 		serverOpts = append(serverOpts, grpc.ChainUnaryInterceptor(interceptors...))
+	}
+
+	if len(streamInterceptors) > 0 {
+		serverOpts = append(serverOpts, grpc.ChainStreamInterceptor(streamInterceptors...))
 	}
 
 	s := grpc.NewServer(serverOpts...)
@@ -75,6 +83,9 @@ func DefaultServerOptions(cfg *config.Config, logger *slog.Logger) ServerOptions
 		UnaryInterceptors: []grpc.UnaryServerInterceptor{
 			middleware.AuthInterceptor,
 			middleware.LoggerInterceptor(logger),
+		},
+		StreamInterceptors: []grpc.StreamServerInterceptor{
+			middleware.StreamingLoggerInterceptor(logger),
 		},
 		EnableReflection: true,
 		EnableValidation: true,

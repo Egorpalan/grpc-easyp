@@ -6,14 +6,12 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/Egorpalan/grpc-easyp/internal/lib/postgres"
 	"github.com/Egorpalan/grpc-easyp/internal/model/notes"
 )
 
 var psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
-const notesTable = "notes"
 
 type Querier interface {
 	Create(ctx context.Context, note *notes.Note) error
@@ -24,14 +22,14 @@ type Querier interface {
 }
 
 type Query struct {
-	ctx  context.Context
-	pool *pgxpool.Pool
+	ctx         context.Context
+	queryEngine postgres.QueryEngine
 }
 
-func NewQuery(ctx context.Context, pool *pgxpool.Pool) Querier {
+func NewQuery(ctx context.Context, queryEngine postgres.QueryEngine) Querier {
 	return &Query{
-		ctx:  ctx,
-		pool: pool,
+		ctx:         ctx,
+		queryEngine: queryEngine,
 	}
 }
 
@@ -49,7 +47,7 @@ func (q *Query) Create(ctx context.Context, note *notes.Note) error {
 		return err
 	}
 
-	_, err = q.pool.Exec(ctx, query, args...)
+	_, err = q.queryEngine.Exec(ctx, query, args...)
 	return err
 }
 
@@ -64,7 +62,7 @@ func (q *Query) GetByID(ctx context.Context, id string) (*notes.Note, error) {
 	}
 
 	var result Note
-	err = q.pool.QueryRow(ctx, query, args...).Scan(
+	err = q.queryEngine.QueryRow(ctx, query, args...).Scan(
 		&result.ID,
 		&result.Title,
 		&result.Description,
@@ -91,7 +89,7 @@ func (q *Query) List(ctx context.Context) ([]*notes.Note, error) {
 		return nil, err
 	}
 
-	rows, err := q.pool.Query(ctx, query, args...)
+	rows, err := q.queryEngine.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +133,7 @@ func (q *Query) Update(ctx context.Context, note *notes.Note) error {
 		return err
 	}
 
-	result, err := q.pool.Exec(ctx, query, args...)
+	result, err := q.queryEngine.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -156,7 +154,7 @@ func (q *Query) Delete(ctx context.Context, id string) error {
 		return err
 	}
 
-	result, err := q.pool.Exec(ctx, query, args...)
+	result, err := q.queryEngine.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}

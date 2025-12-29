@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package api.events.v1;
+
+option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/events/v1";
+
+import "api/events/v1/messages.proto";
+
+service EventsAPI {
+  rpc SubscribeToEvents(SubscribeToEventsRequest) returns (stream EventResponse) {}
+}

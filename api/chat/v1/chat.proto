@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package api.chat.v1;
+
+option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/chat/v1";
+
+import "api/chat/v1/messages.proto";
+
+service ChatAPI {
+  rpc Chat(stream ChatMessage) returns (stream ChatMessage) {}
+}

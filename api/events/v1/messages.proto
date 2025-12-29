@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package api.events.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/events/v1";
+
+message SubscribeToEventsRequest {
+  optional string user_id = 1;
+}
+
+message EventResponse {
+  oneof event {
+    HealthCheck health_check = 1;
+    NoteCreated note_created = 2;
+  }
+}
+
+message HealthCheck {
+  string message = 1;
+}
+
+message NoteCreated {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
