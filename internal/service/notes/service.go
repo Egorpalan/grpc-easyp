@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/Egorpalan/grpc-easyp/internal/model/event"
 	"github.com/Egorpalan/grpc-easyp/internal/model/exception"
 	"github.com/Egorpalan/grpc-easyp/internal/model/notes"
 	"github.com/Egorpalan/grpc-easyp/internal/repository/postgresql"
@@ -18,14 +19,16 @@ type Service interface {
 }
 
 type service struct {
-	logger *slog.Logger
-	repo   postgresql.Repository
+	logger         *slog.Logger
+	repo           postgresql.Repository
+	eventPublisher EventPublisher
 }
 
-func NewService(logger *slog.Logger, repo postgresql.Repository) Service {
+func NewService(logger *slog.Logger, repo postgresql.Repository, eventPublisher EventPublisher) Service {
 	return &service{
-		logger: logger,
-		repo:   repo,
+		logger:         logger,
+		repo:           repo,
+		eventPublisher: eventPublisher,
 	}
 }
 
@@ -45,64 +48,93 @@ func (s *service) createNote(ctx context.Context, title, description string) (*n
 		Description: description,
 	}
 
-	querier := s.repo.NewNotesQuery(ctx)
-	if err := querier.Create(ctx, note); err != nil {
-		s.logger.ErrorContext(ctx,
-			"failed to create note",
-			"error", err,
-			"note_id", newID,
-		)
+	var createdNote *notes.Note
+	err := s.repo.RunInTransaction(ctx, func(ctx context.Context) error {
+		querier := s.repo.NewNotesQuery(ctx)
+
+		if err := querier.Create(ctx, note); err != nil {
+			s.logger.ErrorContext(ctx,
+				"failed to create note",
+				"error", err,
+				"note_id", newID,
+			)
+			return err
+		}
+
+		var getErr error
+		createdNote, getErr = querier.GetByID(ctx, newID)
+		if getErr != nil {
+			s.logger.ErrorContext(ctx,
+				"failed to get created note",
+				"error", getErr,
+				"note_id", newID,
+			)
+			return getErr
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
 
-	createdNote, err := querier.GetByID(ctx, newID)
-	if err != nil {
-		s.logger.ErrorContext(ctx,
-			"failed to get created note",
-			"error", err,
-			"note_id", newID,
-		)
-		return nil, err
+	if s.eventPublisher != nil && createdNote != nil && createdNote.ID != nil {
+		s.eventPublisher.Publish(ctx, event.Event{
+			Type:   event.MessageTypeNoteCreated,
+			NoteID: *createdNote.ID,
+		})
 	}
 
 	return createdNote, nil
 }
 
 func (s *service) updateNote(ctx context.Context, id, title, description string) (*notes.Note, error) {
-	querier := s.repo.NewNotesQuery(ctx)
+	var updatedNote *notes.Note
 
-	note, err := querier.GetByID(ctx, id)
+	err := s.repo.RunInTransaction(ctx, func(ctx context.Context) error {
+		querier := s.repo.NewNotesQuery(ctx)
+
+		note, err := querier.GetByID(ctx, id)
+		if err != nil {
+			s.logger.ErrorContext(ctx,
+				"failed to get note for update",
+				"error", err,
+				"note_id", id,
+			)
+			return err
+		}
+		if note == nil {
+			return exception.ErrNoteNotFound
+		}
+
+		note.Title = title
+		note.Description = description
+
+		if updateErr := querier.Update(ctx, note); updateErr != nil {
+			s.logger.ErrorContext(ctx,
+				"failed to update note",
+				"error", updateErr,
+				"note_id", id,
+			)
+			return updateErr
+		}
+
+		var getErr error
+		updatedNote, getErr = querier.GetByID(ctx, id)
+		if getErr != nil {
+			s.logger.ErrorContext(ctx,
+				"failed to get updated note",
+				"error", getErr,
+				"note_id", id,
+			)
+			return getErr
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		s.logger.ErrorContext(ctx,
-			"failed to get note for update",
-			"error", err,
-			"note_id", id,
-		)
-		return nil, err
-	}
-	if note == nil {
-		return nil, exception.ErrNoteNotFound
-	}
-
-	note.Title = title
-	note.Description = description
-
-	if updateErr := querier.Update(ctx, note); updateErr != nil {
-		s.logger.ErrorContext(ctx,
-			"failed to update note",
-			"error", updateErr,
-			"note_id", id,
-		)
-		return nil, updateErr
-	}
-
-	updatedNote, err := querier.GetByID(ctx, id)
-	if err != nil {
-		s.logger.ErrorContext(ctx,
-			"failed to get updated note",
-			"error", err,
-			"note_id", id,
-		)
 		return nil, err
 	}
 

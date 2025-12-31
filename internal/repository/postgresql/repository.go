@@ -5,21 +5,22 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/Egorpalan/grpc-easyp/internal/config"
+	"github.com/Egorpalan/grpc-easyp/internal/lib/postgres"
 	"github.com/Egorpalan/grpc-easyp/internal/repository/postgresql/notes"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository interface {
 	NewNotesQuery(ctx context.Context) notes.Querier
+	RunInTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type repository struct {
-	pool *pgxpool.Pool
+	txManager *postgres.TransactionManager
 }
 
-func NewPGConnection(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
+func NewPGConnection(ctx context.Context, cfg *config.Config) (*postgres.Connection, error) {
 	dbConfig, err := pgxpool.ParseConfig(fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.PostgresConfig.PostgresUser,
@@ -44,13 +45,21 @@ func NewPGConnection(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, er
 		return nil, err
 	}
 
-	return pool, nil
+	return postgres.NewConnection(pool), nil
 }
 
-func NewRepository(pool *pgxpool.Pool) Repository {
-	return &repository{pool: pool}
+func NewRepository(connection *postgres.Connection) Repository {
+	txManager := postgres.NewTransactionManager(connection)
+	return &repository{
+		txManager: txManager,
+	}
 }
 
 func (r *repository) NewNotesQuery(ctx context.Context) notes.Querier {
-	return notes.NewQuery(ctx, r.pool)
+	queryEngine := r.txManager.GetQueryEngine(ctx)
+	return notes.NewQuery(ctx, queryEngine)
+}
+
+func (r *repository) RunInTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return r.txManager.RunReadCommitted(ctx, fn)
 }

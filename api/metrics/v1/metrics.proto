@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package api.metrics.v1;
+
+option go_package = "github.com/Egorpalan/grpc-easyp/pkg/api/metrics/v1";
+
+import "api/metrics/v1/messages.proto";
+
+service MetricsAPI{
+  rpc UploadMetrics(stream UploadMetricsRequest) returns (UploadMetricsResponse) {}
+}
